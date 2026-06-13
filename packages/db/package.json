@@ -8,23 +8,32 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./queries": {
+      "types": "./src/queries/index.ts",
+      "default": "./dist/queries/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/seed.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
+    "@node-rs/argon2": "^2.0.2",
     "dotenv": "^17.4.2",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.16.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
+    "@types/pg": "^8.11.14",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.22.4"
   }
