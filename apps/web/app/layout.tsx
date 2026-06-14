@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter, Libre_Caslon_Text } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/lib/auth-context";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
 
@@ -40,7 +41,9 @@ export default function RootLayout({
       </head>
       <body className="font-sans">
         <QueryProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

@@ -18,6 +18,7 @@ import { useCategories } from "@/hooks/customer/useCategories";
 import { useMenuItems } from "@/hooks/customer/useMenu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
+import { AddToCartButton } from "@/components/customer/AddToCartButton";
 
 function MenuContent() {
   const searchParams = useSearchParams();
@@ -239,12 +240,7 @@ function MenuContent() {
                   <span className="text-xl font-bold tracking-tight text-foreground">
                     ₹{parseFloat(item.price).toString().replace(/\.00$/, "")}
                   </span>
-                  <button className="flex items-center gap-1 rounded-lg bg-[#ea580c] px-5 py-1.5 font-semibold text-white shadow-sm transition-colors hover:bg-[#c2410c] active:scale-95">
-                    <span className="mb-[2px] text-lg leading-none font-light">
-                      +
-                    </span>{" "}
-                    ADD
-                  </button>
+                  <AddToCartButton menuItemId={item.id} />
                 </div>
               </div>
             </div>
