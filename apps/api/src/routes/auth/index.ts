@@ -17,10 +17,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const result = await login(fastify.db, fastify, email, password);
       return result;
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error & { statusCode?: number };
       return reply
-        .code(err.statusCode ?? 500)
-        .send({ error: err.message ?? "Login failed" });
+        .code((error.statusCode ?? 500) as any)
+        .send({ error: error.message ?? "Login failed" });
     }
   });
 
@@ -34,10 +35,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       try {
         const result = await refresh(fastify.db, fastify, refreshToken);
         return result;
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as Error & { statusCode?: number };
         return reply
-          .code(err.statusCode ?? 500)
-          .send({ error: err.message ?? "Token refresh failed" });
+          .code((error.statusCode ?? 500) as any)
+          .send({ error: error.message ?? "Token refresh failed" });
       }
     },
   );

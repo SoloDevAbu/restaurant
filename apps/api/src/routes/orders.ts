@@ -26,10 +26,11 @@ const ordersRoutes: FastifyPluginAsync = async (fastify) => {
 
       reply.code(201);
       return order;
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error & { statusCode?: number };
       throw {
         statusCode: 400,
-        message: err.message ?? "Failed to place order",
+        message: error.message ?? "Failed to place order",
       };
     }
   });

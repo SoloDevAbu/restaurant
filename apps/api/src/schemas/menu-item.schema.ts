@@ -1,11 +1,4 @@
-const DIET_TYPES = ["veg", "non_veg", "vegan"] as const;
-const FEATURED_TAGS = [
-  "must_try",
-  "main_course",
-  "combo",
-  "dessert",
-  "drink",
-] as const;
+import { DIET_TYPES, FEATURED_TAGS } from "@repo/types";
 
 // Reusable menu item object
 

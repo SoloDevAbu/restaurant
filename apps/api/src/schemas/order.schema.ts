@@ -1,11 +1,4 @@
-const ORDER_STATUSES = [
-  "pending",
-  "confirmed",
-  "preparing",
-  "out_for_delivery",
-  "delivered",
-  "cancelled",
-] as const;
+import { ORDER_STATUSES } from "@repo/types";
 
 // Reusable order item shape
 
