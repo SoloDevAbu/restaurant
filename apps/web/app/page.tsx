@@ -1,3 +1,5 @@
+"use client";
+
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -5,8 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import Image from "next/image";
+import Link from "next/link";
+import { useCategories } from "@/hooks/customer/useCategories";
 
 export default function Home() {
+  const { data: categories, isLoading } = useCategories();
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar variant="user" />
@@ -23,9 +29,11 @@ export default function Home() {
           <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-center items-start text-white">
             <h1 className="font-heading text-4xl md:text-6xl mb-2 font-bold tracking-tight">Artisanal Hearth</h1>
             <p className="text-xl md:text-3xl mb-8 opacity-90 italic font-heading">Modern flavors, traditional warmth</p>
-            <Button size="lg" className="text-lg px-8 py-6 rounded-md shadow-lg transition-transform active:scale-95">
-              View Menu
-            </Button>
+            <Link href="/menu">
+              <Button size="lg" className="text-lg px-8 py-6 rounded-md shadow-lg transition-transform active:scale-95">
+                View Menu
+              </Button>
+            </Link>
           </div>
         </section>
 
@@ -39,23 +47,31 @@ export default function Home() {
             
             <ScrollArea className="w-full whitespace-nowrap pb-4">
               <div className="flex w-max space-x-4">
-                {[
-                  { name: "Starters", icon: "restaurant_menu", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuARViwjWnmcvEiozUMgbgEkMQ_w0TZ1toQO6hyB22rMpiJWOO2r749do3qDHFLGHVXrStlJPT0nE_RujsDIR-3VKMy6wyyzrQHjyQh62UL0QUOoH01uf6ZyxMALsYn93HBBiheDvJ12QVUBMOMngP5m18eYmYxJcfKiH6Dq8m5mls71XQFYnrjKc6nW4T1W9lCJ5PwbqiOUIl484frvjcXk6YTAYLqSh765oUvaZOEPHBiSuRDf9bAiaCZDNTZ3PwCoHz0zVO3PhXMY" },
-                  { name: "Mains", icon: "dinner_dining", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBe4LNKb-aGniAi390Rx-b9o_7Gaw6qbNHhY-4K4uYSKATGtceMwXF_W8T46Auqv9Cmad5LoJ7T0CpYK8RJAAf-bxCVqqxepCMZQfCaU_kL7aeAKWI4CWcCBi2ealopU9LDN67QxKFbAEgu_Bd0O29wCpKytspS0VT1im_r6BEXvT6JtP-1rY1EUZgJTpa5x9KROjss3YyhTHyB5tTHLNbG_yV9I1JnOX8LoheeZtxY6ACJui21SJBQ6psoVjvgGm0sz9DAW1YH-i3f" },
-                  { name: "Desserts", icon: "icecream", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrdq67bHJXYuVochi2qU3X3zrWUYDaVKA_dIorjlI4cDTvYqxQs-etfgoGtvsllUczFED-_PZeI8cDX3O8r1bmeHH1UPGyf3V_8TaR81g-FtcjskU1LNeEa016mfRA88Ki1dSVXAdswyOa1Wpm6867xMEL8UwUtFTyyErw-bGRd5o8FtOmk421HprWuNNS70GnQ8fH6pGjGmXEjEpM2q_On8aRtyxo7gFip8b-VYcWa33ULYYQRhJUMlGU5JfDbQcKrygYJmEQe100" },
-                  { name: "Drinks", icon: "local_bar", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDylFyIGoNE_RsRGrlCJOiHb92DrJFt7CxhOFalUYcvNyytRnHCc_mPriQxcDS8htXost2YPUkbgB7xZeg44uWpD8xSntNHQhzNJ6F3ct2IWVO4jHZO2fufOuzccT5FLOybq0KfwBqtNToW8jbR9tUVmMEqiE04wxUXo3QOIrHpHohTex2nBrJYP8W3JZSHluXh8uOpEnq3_NUxmfm47qYoMiF3U5Yv_APveFhdphNhmvcpXCpVFXJCDv90mJWsIrN4XVbEAVuFtL-C" },
-                ].map((category) => (
-                  <div key={category.name} className="w-[200px] md:w-[240px] shrink-0 group cursor-pointer">
-                    <div className="aspect-square relative rounded-xl overflow-hidden shadow-sm border border-border transition-transform duration-300 group-hover:scale-[1.02]">
-                      <img src={category.img} alt={category.name} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
-                      <div className="absolute bottom-4 left-4 text-white">
-                        <span className="material-symbols-outlined mb-1 block text-[32px]">{category.icon}</span>
-                        <p className="font-semibold text-lg">{category.name}</p>
-                      </div>
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="w-[200px] md:w-[240px] shrink-0">
+                      <div className="aspect-square relative rounded-xl overflow-hidden bg-muted animate-pulse"></div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  categories?.map((category: any) => (
+                    <Link href={`/menu?category=${category.id}`} key={category.id}>
+                      <div className="w-[200px] md:w-[240px] shrink-0 group cursor-pointer">
+                        <div className="aspect-square relative rounded-xl overflow-hidden shadow-sm border border-border transition-transform duration-300 group-hover:scale-[1.02]">
+                          {category.imageUrl ? (
+                            <img src={category.imageUrl} alt={category.name} className="w-full h-full object-cover bg-muted" />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">No image</div>
+                          )}
+                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+                          <div className="absolute bottom-4 left-4 text-white">
+                            <p className="font-semibold text-lg">{category.name}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                )}
               </div>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
