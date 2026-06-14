@@ -6,6 +6,7 @@ import jwtPlugin from "./plugins/jwt";
 import authRoutes from "./routes/auth/index";
 import adminRoutes from "./routes/admin/index";
 import menuRoutes from "./routes/menu";
+import categoriesRoutes from "./routes/categories";
 import ordersRoutes from "./routes/orders";
 import sseRoutes from "./routes/sse";
 import type { FastifyError } from "fastify";
@@ -37,6 +38,7 @@ export async function buildApp() {
   await app.register(authRoutes, { prefix: "/api/auth" });
   await app.register(adminRoutes, { prefix: "/api/admin" });
   await app.register(menuRoutes, { prefix: "/api/menu" });
+  await app.register(categoriesRoutes, { prefix: "/api/categories" });
   await app.register(ordersRoutes, { prefix: "/api/orders" });
   await app.register(sseRoutes, { prefix: "/api/sse" });
 
