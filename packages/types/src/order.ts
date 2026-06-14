@@ -1,10 +1,6 @@
-export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "preparing"
-  | "out_for_delivery"
-  | "delivered"
-  | "cancelled";
+import { ORDER_STATUSES } from "./constants";
+
+export type OrderStatus = typeof ORDER_STATUSES[number];
 
 export interface OrderItemDetail {
   id: number;

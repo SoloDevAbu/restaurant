@@ -1,10 +1,7 @@
-export type DietType = "veg" | "non_veg" | "vegan";
-export type FeaturedTag =
-  | "must_try"
-  | "main_course"
-  | "combo"
-  | "dessert"
-  | "drink";
+import { DIET_TYPES, FEATURED_TAGS } from "./constants";
+
+export type DietType = typeof DIET_TYPES[number];
+export type FeaturedTag = typeof FEATURED_TAGS[number];
 
 export interface MenuItem {
   id: number;
