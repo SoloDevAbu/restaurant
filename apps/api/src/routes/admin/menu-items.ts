@@ -62,7 +62,7 @@ const menuItemsRoutes: FastifyPluginAsync = async (fastify) => {
         isAvailable?: boolean;
         isFeatured?: boolean;
         featuredTag?: string;
-        dietType?: string;
+        dietType?: "veg" | "non_veg";
         displayOrder?: number;
       };
 
