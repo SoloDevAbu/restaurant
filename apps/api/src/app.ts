@@ -9,6 +9,7 @@ import menuRoutes from "./routes/menu";
 import categoriesRoutes from "./routes/categories";
 import ordersRoutes from "./routes/orders";
 import sseRoutes from "./routes/sse";
+import userRoutes from "./routes/user/index";
 import type { FastifyError } from "fastify";
 
 export async function buildApp() {
@@ -22,6 +23,9 @@ export async function buildApp() {
   await app.register(cors, {
     origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200,
   });
 
   // Rate limiting
@@ -41,6 +45,7 @@ export async function buildApp() {
   await app.register(categoriesRoutes, { prefix: "/api/categories" });
   await app.register(ordersRoutes, { prefix: "/api/orders" });
   await app.register(sseRoutes, { prefix: "/api/sse" });
+  await app.register(userRoutes, { prefix: "/api/user" });
 
   // Health check
   app.get("/health", async () => ({
