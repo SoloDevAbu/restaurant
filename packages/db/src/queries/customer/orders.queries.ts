@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "../../schema";
 import { orders, orderItems, menuItems } from "../../schema";
@@ -31,7 +31,6 @@ export interface PlaceOrderData extends Omit<
  */
 export async function placeOrder(db: DB, data: PlaceOrderData) {
   return db.transaction(async (tx) => {
-    // Fetch all menu items referenced in the order
     const menuItemIds = data.items.map((i) => i.menuItemId);
     const fetchedItems = await Promise.all(
       menuItemIds.map((id) =>
@@ -49,7 +48,6 @@ export async function placeOrder(db: DB, data: PlaceOrderData) {
       ),
     );
 
-    // Validate all items exist and are available
     for (let i = 0; i < data.items.length; i++) {
       const item = data.items[i]!;
       const dbItem = fetchedItems[i];
@@ -61,7 +59,6 @@ export async function placeOrder(db: DB, data: PlaceOrderData) {
       }
     }
 
-    // Calculate total
     let total = 0;
     for (let i = 0; i < data.items.length; i++) {
       const item = data.items[i]!;
@@ -69,7 +66,6 @@ export async function placeOrder(db: DB, data: PlaceOrderData) {
       total += parseFloat(dbItem.price) * item.quantity;
     }
 
-    // Insert the order
     const orderResult = await tx
       .insert(orders)
       .values({
@@ -85,7 +81,6 @@ export async function placeOrder(db: DB, data: PlaceOrderData) {
 
     const order = orderResult[0]!;
 
-    // Insert all order items (snapshot prices + names)
     await tx.insert(orderItems).values(
       data.items.map((item, i) => ({
         orderId: order.id,
@@ -123,4 +118,34 @@ export async function findOrderByIdForCustomer(db: DB, id: string) {
     .where(eq(orderItems.orderId, id));
 
   return { ...order, items };
+}
+
+/** Get all orders for a specific customer, newest first */
+export async function findOrdersByCustomerId(db: DB, customerId: number) {
+  const orderRows = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.customerId, customerId))
+    .orderBy(desc(orders.createdAt));
+
+  if (orderRows.length === 0) return [];
+
+  const ordersWithItems = await Promise.all(
+    orderRows.map(async (order) => {
+      const items = await db
+        .select({
+          id: orderItems.id,
+          menuItemId: orderItems.menuItemId,
+          itemName: orderItems.itemName,
+          quantity: orderItems.quantity,
+          unitPrice: orderItems.unitPrice,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, order.id));
+
+      return { ...order, items };
+    }),
+  );
+
+  return ordersWithItems;
 }

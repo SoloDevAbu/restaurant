@@ -9,6 +9,7 @@ import {
   boolean,
   pgEnum,
   uuid,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // Enums
@@ -120,3 +121,38 @@ export const orderItems = pgTable("order_items", {
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
   itemName: varchar("item_name", { length: 150 }).notNull(),
 });
+
+// User Addresses (one per customer, upsert pattern)
+
+export const userAddresses = pgTable("user_addresses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  address: text("address").notNull(),
+  pincode: varchar("pincode", { length: 10 }).notNull(),
+  landmark: varchar("landmark", { length: 150 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Cart Items
+
+export const cartItems = pgTable(
+  "cart_items",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    menuItemId: integer("menu_item_id")
+      .notNull()
+      .references(() => menuItems.id, { onDelete: "cascade" }),
+    quantity: integer("quantity").notNull().default(1),
+    addedAt: timestamp("added_at").defaultNow().notNull(),
+  },
+  (t) => [unique("cart_user_item_unique").on(t.userId, t.menuItemId)],
+);

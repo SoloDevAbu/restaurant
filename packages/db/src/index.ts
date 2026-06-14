@@ -27,3 +27,9 @@ export type NewOrderItem = typeof schema.orderItems.$inferInsert;
 
 export type RefreshToken = typeof schema.refreshTokens.$inferSelect;
 export type NewRefreshToken = typeof schema.refreshTokens.$inferInsert;
+
+export type UserAddress = typeof schema.userAddresses.$inferSelect;
+export type NewUserAddress = typeof schema.userAddresses.$inferInsert;
+
+export type CartItem = typeof schema.cartItems.$inferSelect;
+export type NewCartItem = typeof schema.cartItems.$inferInsert;
