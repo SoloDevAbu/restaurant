@@ -32,7 +32,7 @@ export async function findAllMenuItems(
     conditions.push(eq(menuItems.isFeatured, filters.isFeatured));
   }
   if (filters.dietType !== undefined) {
-    conditions.push(eq(menuItems.dietType, filters.dietType));
+    conditions.push(eq(menuItems.dietType, filters.dietType as any));
   }
   if (filters.isAvailable !== undefined) {
     conditions.push(eq(menuItems.isAvailable, filters.isAvailable));

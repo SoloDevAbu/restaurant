@@ -19,6 +19,8 @@ export const userRoleEnum = pgEnum("user_role", [
   "customer",
 ]);
 
+export const dietTypeEnum = pgEnum("diet_type", ["veg", "non_veg"]);
+
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "confirmed",
@@ -81,8 +83,7 @@ export const menuItems = pgTable("menu_items", {
   isFeatured: boolean("is_featured").default(false).notNull(),
   /** e.g. 'must_try' | 'main_course' | 'combo' | 'dessert' | 'drink' */
   featuredTag: varchar("featured_tag", { length: 50 }),
-  /** e.g. 'veg' | 'non_veg' | 'vegan' */
-  dietType: varchar("diet_type", { length: 10 }),
+  dietType: dietTypeEnum("diet_type"),
   displayOrder: integer("display_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

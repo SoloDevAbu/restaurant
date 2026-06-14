@@ -1,4 +1,4 @@
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and, ilike, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "../../schema";
 import { categories, menuItems } from "../../schema";
@@ -50,5 +50,47 @@ export async function getFeaturedItems(db: DB) {
     .from(menuItems)
     .leftJoin(categories, eq(menuItems.categoryId, categories.id))
     .where(eq(menuItems.isFeatured, true))
+    .orderBy(asc(menuItems.displayOrder));
+}
+
+/**
+ * Returns filtered menu items (must be available).
+ * Allows filtering by category and diet type.
+ */
+export async function getMenuItemsFiltered(
+  db: DB,
+  filters: { categoryId?: number; dietType?: string; search?: string }
+) {
+  const conditions: SQL<unknown>[] = [eq(menuItems.isAvailable, true)];
+
+  if (filters.categoryId) {
+    conditions.push(eq(menuItems.categoryId, filters.categoryId));
+  }
+
+  if (filters.dietType) {
+    conditions.push(eq(menuItems.dietType, filters.dietType as any));
+  }
+
+  if (filters.search) {
+    conditions.push(ilike(menuItems.name, `%${filters.search}%`));
+  }
+
+  return db
+    .select({
+      id: menuItems.id,
+      categoryId: menuItems.categoryId,
+      categoryName: categories.name,
+      name: menuItems.name,
+      description: menuItems.description,
+      price: menuItems.price,
+      imageUrl: menuItems.imageUrl,
+      isFeatured: menuItems.isFeatured,
+      featuredTag: menuItems.featuredTag,
+      dietType: menuItems.dietType,
+      displayOrder: menuItems.displayOrder,
+    })
+    .from(menuItems)
+    .leftJoin(categories, eq(menuItems.categoryId, categories.id))
+    .where(and(...conditions))
     .orderBy(asc(menuItems.displayOrder));
 }

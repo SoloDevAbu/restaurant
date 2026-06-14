@@ -1,0 +1,2 @@
+CREATE TYPE "public"."diet_type" AS ENUM('veg', 'non_veg');--> statement-breakpoint
+ALTER TABLE "menu_items" ALTER COLUMN "diet_type" SET DATA TYPE "public"."diet_type" USING "diet_type"::"public"."diet_type";

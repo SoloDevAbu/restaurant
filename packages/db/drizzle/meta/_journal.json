@@ -15,6 +15,13 @@
       "when": 1781374351516,
       "tag": "0001_kind_lady_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781451185744,
+      "tag": "0002_supreme_inertia",
+      "breakpoints": true
     }
   ]
 }

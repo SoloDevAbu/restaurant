@@ -8,3 +8,4 @@ export * from "./admin/dashboard.queries";
 // Customer queries
 export * from "./customer/menu.queries";
 export * from "./customer/orders.queries";
+export * from "./customer/categories.queries";
