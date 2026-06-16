@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import {
-  requestOtp,
-  verifyOtpAndLogin,
+  signupUser,
+  loginUser,
   refreshUserToken,
   logoutUser,
 } from "../../services/user-auth.service";
@@ -14,15 +14,19 @@ import {
   clearCart,
   getCartTotal,
   findOrdersByCustomerId,
+  findUserById,
 } from "@repo/db/queries";
 import { createOrder } from "../../services/order.service";
 import {
-  requestOtpSchema,
-  verifyOtpSchema,
+  signupSchema,
+  loginSchema,
   userRefreshSchema,
   userLogoutSchema,
 } from "../../schemas/user-auth.schema";
-import { getAddressSchema, saveAddressSchema } from "../../schemas/address.schema";
+import {
+  getAddressSchema,
+  saveAddressSchema,
+} from "../../schemas/address.schema";
 import {
   getCartSchema,
   upsertCartItemSchema,
@@ -32,46 +36,39 @@ import {
 } from "../../schemas/cart.schema";
 
 const userRoutes: FastifyPluginAsync = async (fastify) => {
-  // ────────────────────────────────────────────────────────────────
-  // AUTH
-  // ────────────────────────────────────────────────────────────────
-
-  // POST /api/user/auth/request-otp
+  // POST /api/user/auth/signup
   fastify.post(
-    "/auth/request-otp",
-    { schema: requestOtpSchema },
-    async (request) => {
-      const { phone } = request.body as { phone: string };
-      await requestOtp(fastify.db, phone);
-      return { message: "OTP sent" };
+    "/auth/signup",
+    { schema: signupSchema },
+    async (request, reply) => {
+      const { phone, name } = request.body as { phone: string; name: string };
+      try {
+        const result = await signupUser(fastify.db, fastify, name, phone);
+        return reply.code(201).send(result);
+      } catch (err: unknown) {
+        const error = err as Error & { statusCode?: number };
+        return reply
+          .code((error.statusCode ?? 500) as any)
+          .send({ error: error.message ?? "Signup failed" });
+      }
     },
   );
 
-  // POST /api/user/auth/verify-otp
+  // POST /api/user/auth/login
   fastify.post(
-    "/auth/verify-otp",
-    { schema: verifyOtpSchema },
+    "/auth/login",
+    { schema: loginSchema },
     async (request, reply) => {
-      const { phone, otp, name } = request.body as {
-        phone: string;
-        otp: string;
-        name?: string;
-      };
+      const { phone } = request.body as { phone: string };
 
       try {
-        const result = await verifyOtpAndLogin(
-          fastify.db,
-          fastify,
-          phone,
-          otp,
-          name,
-        );
+        const result = await loginUser(fastify.db, fastify, phone);
         return result;
       } catch (err: unknown) {
         const error = err as Error & { statusCode?: number };
         return reply
           .code((error.statusCode ?? 500) as any)
-          .send({ error: error.message ?? "OTP verification failed" });
+          .send({ error: error.message ?? "Login failed" });
       }
     },
   );
@@ -143,16 +140,12 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
     async (request) => {
       const userId = request.user.id;
       const body = request.body as {
-        name: string;
-        phone: string;
         address: string;
         pincode: string;
         landmark?: string;
       };
 
       return upsertUserAddress(fastify.db, userId, {
-        name: body.name,
-        phone: body.phone,
         address: body.address,
         pincode: body.pincode,
         landmark: body.landmark,
@@ -230,10 +223,6 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ────────────────────────────────────────────────────────────────
-  // ORDERS — checkout from cart  (requires auth)
-  // ────────────────────────────────────────────────────────────────
-
   // POST /api/user/orders
   fastify.post(
     "/orders",
@@ -254,6 +243,14 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
+      // Fetch user to get name and phone
+      const userRecord = await findUserById(fastify.db, userId);
+      if (!userRecord) {
+        return reply
+          .code(404 as any)
+          .send({ error: "UserNotFound", message: "User not found" });
+      }
+
       // Fetch cart
       const cartItemsList = await getCartItems(fastify.db, userId);
       if (cartItemsList.length === 0) {
@@ -266,8 +263,8 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
       try {
         const order = await createOrder(fastify.db, {
           customerId: userId,
-          customerName: address.name,
-          customerPhone: address.phone,
+          customerName: userRecord.name,
+          customerPhone: userRecord.phone ?? "",
           deliveryAddress: [
             address.address,
             address.landmark ? `Landmark: ${address.landmark}` : null,
