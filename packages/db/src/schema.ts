@@ -130,8 +130,6 @@ export const userAddresses = pgTable("user_addresses", {
     .notNull()
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
-  name: varchar("name", { length: 100 }).notNull(),
-  phone: varchar("phone", { length: 20 }).notNull(),
   address: text("address").notNull(),
   pincode: varchar("pincode", { length: 10 }).notNull(),
   landmark: varchar("landmark", { length: 150 }),

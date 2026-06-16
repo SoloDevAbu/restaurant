@@ -44,8 +44,6 @@ export async function createCustomerUser(
 // ─── Address ───────────────────────────────────────────────────────────────
 
 export interface UpsertAddressData {
-  name: string;
-  phone: string;
   address: string;
   pincode: string;
   landmark?: string | null;
@@ -61,8 +59,6 @@ export async function upsertUserAddress(
     .insert(userAddresses)
     .values({
       userId,
-      name: data.name,
-      phone: data.phone,
       address: data.address,
       pincode: data.pincode,
       landmark: data.landmark ?? null,
@@ -70,8 +66,6 @@ export async function upsertUserAddress(
     .onConflictDoUpdate({
       target: userAddresses.userId,
       set: {
-        name: data.name,
-        phone: data.phone,
         address: data.address,
         pincode: data.pincode,
         landmark: data.landmark ?? null,
