@@ -1,6 +1,39 @@
-// POST /api/user/auth/request-otp
+// POST /api/user/auth/signup
 
-export const requestOtpSchema = {
+export const signupSchema = {
+  body: {
+    type: "object",
+    properties: {
+      phone: { type: "string", minLength: 7, maxLength: 20 },
+      name: { type: "string", minLength: 1, maxLength: 100 },
+    },
+    required: ["phone", "name"],
+    additionalProperties: false,
+  },
+  response: {
+    201: {
+      type: "object",
+      properties: {
+        accessToken: { type: "string" },
+        refreshToken: { type: "string" },
+        user: {
+          type: "object",
+          properties: {
+            id: { type: "number" },
+            name: { type: "string" },
+            phone: { type: "string" },
+          },
+          required: ["id", "name", "phone"],
+        },
+      },
+      required: ["accessToken", "refreshToken", "user"],
+    },
+  },
+} as const;
+
+// POST /api/user/auth/login
+
+export const loginSchema = {
   body: {
     type: "object",
     properties: {
@@ -13,33 +46,8 @@ export const requestOtpSchema = {
     200: {
       type: "object",
       properties: {
-        message: { type: "string" },
-      },
-      required: ["message"],
-    },
-  },
-} as const;
-
-// POST /api/user/auth/verify-otp
-
-export const verifyOtpSchema = {
-  body: {
-    type: "object",
-    properties: {
-      phone: { type: "string", minLength: 7, maxLength: 20 },
-      otp: { type: "string", minLength: 4, maxLength: 8 },
-      name: { type: "string", minLength: 1, maxLength: 100 },
-    },
-    required: ["phone", "otp"],
-    additionalProperties: false,
-  },
-  response: {
-    200: {
-      type: "object",
-      properties: {
         accessToken: { type: "string" },
         refreshToken: { type: "string" },
-        isNewUser: { type: "boolean" },
         user: {
           type: "object",
           properties: {
@@ -50,7 +58,7 @@ export const verifyOtpSchema = {
           required: ["id", "name", "phone"],
         },
       },
-      required: ["accessToken", "refreshToken", "isNewUser", "user"],
+      required: ["accessToken", "refreshToken", "user"],
     },
   },
 } as const;
