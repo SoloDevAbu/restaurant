@@ -8,27 +8,13 @@ import {
   findRefreshToken,
   deleteRefreshToken,
 } from "@repo/db/queries";
-import { generateOtp, verifyOtp } from "./otp.service";
 import type { DB } from "@repo/db";
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// ─── Step 1: Request OTP ───────────────────────────────────────────────────
-
-/**
- * Generate and "send" (log) an OTP for the given phone number.
- * Returns the generated code so tests/tooling can assert on it.
- */
-export async function requestOtp(_db: DB, phone: string): Promise<void> {
-  generateOtp(phone);
-}
-
-// ─── Step 2: Verify OTP + issue tokens ────────────────────────────────────
-
-export interface VerifyOtpResult {
+export interface AuthResult {
   accessToken: string;
   refreshToken: string;
-  isNewUser: boolean;
   user: {
     id: number;
     name: string;
@@ -37,45 +23,60 @@ export interface VerifyOtpResult {
 }
 
 /**
- * Verify the OTP and return JWT tokens.
- * If no user exists for the phone, create one (requires `name`).
+ * Sign up a new user. Throws if phone is already registered.
  */
-export async function verifyOtpAndLogin(
+export async function signupUser(
+  db: DB,
+  app: FastifyInstance,
+  name: string,
+  phone: string,
+): Promise<AuthResult> {
+  const existingUser = await findUserByPhone(db, phone);
+  if (existingUser) {
+    throw { statusCode: 409, message: "User already exists with this phone number" };
+  }
+
+  const user = await createCustomerUser(db, { name: name.trim(), phone });
+
+  const accessToken = app.jwt.sign({
+    id: user.id,
+    email: user.email ?? "",
+    role: user.role,
+    name: user.name,
+  });
+
+  const refreshTokenValue = randomBytes(40).toString("hex");
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+
+  await saveRefreshToken(db, {
+    userId: user.id,
+    token: refreshTokenValue,
+    expiresAt,
+  });
+
+  return {
+    accessToken,
+    refreshToken: refreshTokenValue,
+    user: {
+      id: user.id,
+      name: user.name,
+      phone: user.phone ?? phone,
+    },
+  };
+}
+
+/**
+ * Log in an existing user. Throws if user not found.
+ */
+export async function loginUser(
   db: DB,
   app: FastifyInstance,
   phone: string,
-  otp: string,
-  name?: string,
-): Promise<VerifyOtpResult> {
-  let user = await findUserByPhone(db, phone);
-  let isNewUser = false;
-
+): Promise<AuthResult> {
+  const user = await findUserByPhone(db, phone);
+  
   if (!user) {
-    if (!name || name.trim().length === 0) {
-      // 2-step signup: verify OTP but keep it in the store
-      if (!verifyOtp(phone, otp, true)) {
-        throw { statusCode: 401, message: "Invalid or expired OTP" };
-      }
-      // Return a special flag so the UI knows to ask for the name
-      return {
-        accessToken: "",
-        refreshToken: "",
-        isNewUser: true,
-        user: { id: 0, name: "", phone },
-      };
-    }
-
-    // Now they provided a name, consume OTP
-    if (!verifyOtp(phone, otp, false)) {
-      throw { statusCode: 401, message: "Invalid or expired OTP" };
-    }
-    user = await createCustomerUser(db, { name: name.trim(), phone });
-    isNewUser = true;
-  } else {
-    // Existing user, consume OTP
-    if (!verifyOtp(phone, otp, false)) {
-      throw { statusCode: 401, message: "Invalid or expired OTP" };
-    }
+    throw { statusCode: 404, message: "User not found. Please sign up." };
   }
 
   if (!user.isActive) {
@@ -101,7 +102,6 @@ export async function verifyOtpAndLogin(
   return {
     accessToken,
     refreshToken: refreshTokenValue,
-    isNewUser,
     user: {
       id: user.id,
       name: user.name,
