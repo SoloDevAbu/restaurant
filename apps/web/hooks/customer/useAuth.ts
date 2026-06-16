@@ -4,50 +4,59 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { userApi } from "@/lib/user-api";
 import { useAuth } from "@/lib/auth-context";
 
-// ─── Request OTP ──────────────────────────────────────────────────────────
+// ─── Signup ───────────────────────────────────────────────────────────────
 
-export function useRequestOtp() {
-  return useMutation({
-    mutationFn: async (phone: string) => {
-      const { data } = await userApi.post("/user/auth/request-otp", { phone });
-      return data as { message: string };
-    },
-  });
-}
-
-// ─── Verify OTP + auto-login ──────────────────────────────────────────────
-
-export interface VerifyOtpPayload {
+export interface SignupPayload {
   phone: string;
-  otp: string;
-  name?: string;
+  name: string;
 }
 
-export interface VerifyOtpResult {
+export interface AuthResult {
   accessToken: string;
   refreshToken: string;
-  isNewUser: boolean;
   user: { id: number; name: string; phone: string };
 }
 
-export function useVerifyOtp() {
+export function useSignup() {
   const { setAuth } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: VerifyOtpPayload) => {
-      const { data } = await userApi.post<VerifyOtpResult>(
-        "/user/auth/verify-otp",
+    mutationFn: async (payload: SignupPayload) => {
+      const { data } = await userApi.post<AuthResult>(
+        "/user/auth/signup",
         payload,
       );
       return data;
     },
     onSuccess: (data) => {
-      if (data.accessToken) {
-        setAuth(data.user, data.accessToken, data.refreshToken);
-        // Refresh cart after login so badge shows real count
-        queryClient.invalidateQueries({ queryKey: ["user", "cart"] });
-      }
+      setAuth(data.user, data.accessToken, data.refreshToken);
+      queryClient.invalidateQueries({ queryKey: ["user", "cart"] });
+    },
+  });
+}
+
+// ─── Login ────────────────────────────────────────────────────────────────
+
+export interface LoginPayload {
+  phone: string;
+}
+
+export function useLogin() {
+  const { setAuth } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: LoginPayload) => {
+      const { data } = await userApi.post<AuthResult>(
+        "/user/auth/login",
+        payload,
+      );
+      return data;
+    },
+    onSuccess: (data) => {
+      setAuth(data.user, data.accessToken, data.refreshToken);
+      queryClient.invalidateQueries({ queryKey: ["user", "cart"] });
     },
   });
 }

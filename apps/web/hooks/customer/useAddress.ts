@@ -7,8 +7,6 @@ import { useAuth } from "@/lib/auth-context";
 export interface UserAddress {
   id: number;
   userId: number;
-  name: string;
-  phone: string;
   address: string;
   pincode: string;
   landmark: string | null;
@@ -17,8 +15,6 @@ export interface UserAddress {
 }
 
 export interface SaveAddressPayload {
-  name: string;
-  phone: string;
   address: string;
   pincode: string;
   landmark?: string;
