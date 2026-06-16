@@ -21,29 +21,23 @@ export default function MyAddressPage() {
   const save = useSaveAddress();
 
   const [form, setForm] = useState({
-    name: "", phone: "", address: "", pincode: "", landmark: "",
+    address: "", pincode: "", landmark: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Pre-fill from saved address or user name/phone
+  // Pre-fill from saved address
   useEffect(() => {
     if (address) {
       setForm({
-        name: address.name,
-        phone: address.phone,
         address: address.address,
         pincode: address.pincode,
         landmark: address.landmark ?? "",
       });
-    } else if (user) {
-      setForm((p) => ({ ...p, name: user.name, phone: user.phone }));
     }
-  }, [address, user]);
+  }, [address]);
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!form.name.trim()) errs.name = "Name is required";
-    if (!form.phone.trim()) errs.phone = "Phone is required";
     if (!form.address.trim()) errs.address = "Address is required";
     if (!form.pincode.trim()) errs.pincode = "Pincode is required";
     return errs;
@@ -56,8 +50,6 @@ export default function MyAddressPage() {
     setErrors({});
     try {
       await save.mutateAsync({
-        name: form.name.trim(),
-        phone: form.phone.trim(),
         address: form.address.trim(),
         pincode: form.pincode.trim(),
         landmark: form.landmark.trim() || undefined,
@@ -112,35 +104,6 @@ export default function MyAddressPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* Name */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="af-name" className="text-sm font-medium">
-                Recipient Name <span className="text-destructive">*</span>
-              </label>
-              <Input id="af-name" placeholder="Full name" className="h-12 rounded-xl" {...field("name")} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
-            </div>
-
-            {/* Phone */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="af-phone" className="text-sm font-medium">
-                Phone <span className="text-destructive">*</span>
-              </label>
-              <div className="flex overflow-hidden rounded-xl border border-border focus-within:ring-2 focus-within:ring-primary/30">
-                <span className="flex items-center border-r border-border bg-muted px-3 text-sm text-muted-foreground">
-                  +91
-                </span>
-                <Input
-                  id="af-phone"
-                  type="tel"
-                  placeholder="Phone number"
-                  className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                  {...field("phone")}
-                />
-              </div>
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
-            </div>
-
             {/* Address */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor="af-address" className="text-sm font-medium">

@@ -50,12 +50,11 @@ export default function CartPage() {
 
   // Address form state
   const [addrForm, setAddrForm] = useState({
-    name: "", phone: "", address: "", pincode: "", landmark: "",
+    address: "", pincode: "", landmark: "",
   });
 
   const handlePlaceOrder = () => {
     if (!address) {
-      // Pre-fill name/phone from context if available
       setShowAddressSheet(true);
       return;
     }
@@ -74,14 +73,12 @@ export default function CartPage() {
   };
 
   const handleSaveAddressAndOrder = async () => {
-    if (!addrForm.name || !addrForm.phone || !addrForm.address || !addrForm.pincode) {
+    if (!addrForm.address || !addrForm.pincode) {
       toast.error("Please fill all required fields");
       return;
     }
     try {
       await saveAddress.mutateAsync({
-        name: addrForm.name,
-        phone: addrForm.phone,
         address: addrForm.address,
         pincode: addrForm.pincode,
         landmark: addrForm.landmark || undefined,
@@ -312,29 +309,6 @@ export default function CartPage() {
           </SheetHeader>
 
           <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium">Name *</label>
-                <Input
-                  id="addr-name"
-                  placeholder="Recipient name"
-                  value={addrForm.name}
-                  onChange={(e) => setAddrForm((p) => ({ ...p, name: e.target.value }))}
-                  className="rounded-xl"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium">Phone *</label>
-                <Input
-                  id="addr-phone"
-                  placeholder="Phone number"
-                  type="tel"
-                  value={addrForm.phone}
-                  onChange={(e) => setAddrForm((p) => ({ ...p, phone: e.target.value }))}
-                  className="rounded-xl"
-                />
-              </div>
-            </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Address *</label>
               <Textarea
