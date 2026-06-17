@@ -19,7 +19,26 @@ export const userApi = axios.create({
 // ─── Request interceptor ──────────────────────────────────────────────────
 userApi.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = Cookies.get("userAccessToken");
+    let token = Cookies.get("userAccessToken");
+    
+    // Fallback to localStorage if cookie is not set (e.g. secure:true on localhost)
+    if (!token) {
+      try {
+        const raw = localStorage.getItem("userAuth");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          token = parsed.accessToken;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    
+    // Fallback for custom keys the user mentioned
+    if (!token) {
+      token = localStorage.getItem("accessToken") || localStorage.getItem("accessKey") || undefined;
+    }
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -37,7 +56,21 @@ userApi.interceptors.response.use(
       originalRequest._retry = true;
 
       if (typeof window !== "undefined") {
-        const refreshToken = Cookies.get("userRefreshToken");
+        let refreshToken = Cookies.get("userRefreshToken");
+
+        if (!refreshToken) {
+          try {
+            const raw = localStorage.getItem("userAuth");
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              refreshToken = parsed.refreshToken;
+            }
+          } catch (e) {}
+        }
+        
+        if (!refreshToken) {
+          refreshToken = localStorage.getItem("refreshToken") || localStorage.getItem("refreshKey") || undefined;
+        }
 
         if (refreshToken) {
           try {
@@ -46,16 +79,28 @@ userApi.interceptors.response.use(
               { refreshToken },
             );
 
+            const isProd = process.env.NODE_ENV === "production";
             Cookies.set("userAccessToken", data.accessToken, {
-              secure: true,
+              secure: isProd,
               sameSite: "strict",
             });
             if (data.refreshToken) {
               Cookies.set("userRefreshToken", data.refreshToken, {
-                secure: true,
+                secure: isProd,
                 sameSite: "strict",
               });
             }
+
+            // Also update localStorage
+            try {
+              const raw = localStorage.getItem("userAuth");
+              if (raw) {
+                const parsed = JSON.parse(raw);
+                parsed.accessToken = data.accessToken;
+                if (data.refreshToken) parsed.refreshToken = data.refreshToken;
+                localStorage.setItem("userAuth", JSON.stringify(parsed));
+              }
+            } catch (e) {}
 
             originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
             return userApi(originalRequest);
@@ -65,6 +110,10 @@ userApi.interceptors.response.use(
             Cookies.remove("userRefreshToken");
             if (typeof localStorage !== "undefined") {
               localStorage.removeItem("userAuth");
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("accessKey");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("refreshKey");
             }
             // Dispatch a custom event so AuthContext can react
             window.dispatchEvent(new Event("user:session-expired"));
@@ -95,12 +144,19 @@ export function persistAuth(data: {
   refreshToken: string;
 }) {
   localStorage.setItem("userAuth", JSON.stringify(data));
+  // also set the raw keys in case that is what's expected
+  localStorage.setItem("accessToken", data.accessToken);
+  localStorage.setItem("accessKey", data.accessToken);
+  localStorage.setItem("refreshToken", data.refreshToken);
+  localStorage.setItem("refreshKey", data.refreshToken);
+
+  const isProd = process.env.NODE_ENV === "production";
   Cookies.set("userAccessToken", data.accessToken, {
-    secure: true,
+    secure: isProd,
     sameSite: "strict",
   });
   Cookies.set("userRefreshToken", data.refreshToken, {
-    secure: true,
+    secure: isProd,
     sameSite: "strict",
   });
 }
@@ -108,6 +164,10 @@ export function persistAuth(data: {
 /** Helper: clear all user auth state */
 export function clearPersistedAuth() {
   localStorage.removeItem("userAuth");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("accessKey");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("refreshKey");
   Cookies.remove("userAccessToken");
   Cookies.remove("userRefreshToken");
 }
