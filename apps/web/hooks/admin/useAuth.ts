@@ -11,9 +11,10 @@ export const useLogin = () => {
       return data;
     },
     onSuccess: (data) => {
-      Cookies.set("accessToken", data.accessToken, { secure: true, sameSite: 'strict' });
+      const isProd = process.env.NODE_ENV === "production";
+      Cookies.set("accessToken", data.accessToken, { secure: isProd, sameSite: 'strict' });
       if (data.refreshToken) {
-        Cookies.set("refreshToken", data.refreshToken, { secure: true, sameSite: 'strict' });
+        Cookies.set("refreshToken", data.refreshToken, { secure: isProd, sameSite: 'strict' });
       }
       queryClient.setQueryData(["session"], data.user);
     },

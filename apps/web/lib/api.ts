@@ -13,21 +13,7 @@ export const api = axios.create({
 // Request Interceptor: Attach access token
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    let token = Cookies.get("accessToken");
-    
-    if (!token) {
-      try {
-        const raw = localStorage.getItem("adminAuth");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          token = parsed.accessToken;
-        }
-      } catch (e) {}
-    }
-    
-    if (!token) {
-      token = localStorage.getItem("accessToken") || localStorage.getItem("accessKey") || undefined;
-    }
+    const token = Cookies.get("accessToken");
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -47,21 +33,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       if (typeof window !== "undefined") {
-        let refreshToken = Cookies.get("refreshToken");
-        
-        if (!refreshToken) {
-          try {
-            const raw = localStorage.getItem("adminAuth");
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              refreshToken = parsed.refreshToken;
-            }
-          } catch (e) {}
-        }
-        
-        if (!refreshToken) {
-          refreshToken = localStorage.getItem("refreshToken") || localStorage.getItem("refreshKey") || undefined;
-        }
+        const refreshToken = Cookies.get("refreshToken");
         
         if (refreshToken) {
           try {
@@ -74,16 +46,6 @@ api.interceptors.response.use(
               Cookies.set("refreshToken", data.refreshToken, { secure: isProd, sameSite: 'strict' });
             }
             
-            try {
-              const raw = localStorage.getItem("adminAuth");
-              if (raw) {
-                const parsed = JSON.parse(raw);
-                parsed.accessToken = data.accessToken;
-                if (data.refreshToken) parsed.refreshToken = data.refreshToken;
-                localStorage.setItem("adminAuth", JSON.stringify(parsed));
-              }
-            } catch (e) {}
-            
             // Update auth header and retry original request
             originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
             return api(originalRequest);
@@ -91,13 +53,7 @@ api.interceptors.response.use(
             // Refresh failed, logout user
             Cookies.remove("accessToken");
             Cookies.remove("refreshToken");
-            if (typeof localStorage !== "undefined") {
-              localStorage.removeItem("adminAuth");
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("accessKey");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("refreshKey");
-            }
+            
             window.location.href = "/login"; // Adjust to your login route
             return Promise.reject(refreshError);
           }

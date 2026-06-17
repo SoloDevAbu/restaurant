@@ -8,7 +8,9 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { getStoredAuth, persistAuth, clearPersistedAuth } from "./user-api";
+import Cookies from "js-cookie";
+import { persistAuth, clearPersistedAuth } from "./user-api";
+import { decodeJwt } from "./utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -23,7 +25,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  isHydrated: boolean; // false until localStorage is read on client
+  isHydrated: boolean; // false until auth is read on client
 }
 
 interface AuthContextType extends AuthState {
@@ -50,20 +52,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isHydrated: false,
   });
 
-  // Hydrate from localStorage on first mount
+  // Hydrate from cookies on first mount
   useEffect(() => {
-    const stored = getStoredAuth();
-    if (stored?.user && stored?.accessToken) {
-      setState({
-        user: stored.user,
-        accessToken: stored.accessToken,
-        refreshToken: stored.refreshToken,
-        isAuthenticated: true,
-        isHydrated: true,
-      });
-    } else {
-      setState((s) => ({ ...s, isHydrated: true }));
+    const accessToken = Cookies.get("accessToken");
+    const refreshToken = Cookies.get("refreshToken") || null;
+
+    if (accessToken) {
+      const decoded = decodeJwt(accessToken);
+      if (decoded && decoded.id) {
+        setState({
+          user: {
+            id: decoded.id,
+            name: decoded.name || "",
+            // Provide email or phone if available in token, or fallback
+            phone: decoded.email || decoded.phone || "",
+          },
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+          isHydrated: true,
+        });
+        return;
+      }
     }
+    
+    setState((s) => ({ ...s, isHydrated: true }));
   }, []);
 
   // Listen for session-expired events fired by the axios interceptor
@@ -83,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setAuth = useCallback(
     (user: AuthUser, accessToken: string, refreshToken: string) => {
-      persistAuth({ user, accessToken, refreshToken });
+      persistAuth({ accessToken, refreshToken });
       setState({
         user,
         accessToken,
