@@ -35,7 +35,9 @@ export function Navbar({ variant = "user" }: NavbarProps) {
       {/* Right side — only for user variant */}
       {variant === "user" && (
         <div className="flex items-center gap-2">
-          <CartButton />
+          <div className="hidden md:block">
+            <CartButton />
+          </div>
 
           {/* Show avatar or sign-in button only once localStorage is hydrated
               to avoid hydration mismatch flicker */}
